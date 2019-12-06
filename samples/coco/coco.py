@@ -84,7 +84,7 @@ class CocoConfig(Config):
     # GPU_COUNT = 8
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 80  # COCO has 80 classes
+    NUM_CLASSES = 1 + 20  # COCO has 80 classes
 
 
 ############################################################
@@ -108,10 +108,12 @@ class CocoDataset(utils.Dataset):
         if auto_download is True:
             self.auto_download(dataset_dir, subset, year)
 
-        coco = COCO("{}/annotations/instances_{}{}.json".format(dataset_dir, subset, year))
+        #coco = COCO("{}/annotations/instances_{}{}.json".format(dataset_dir, subset, year))
+        coco = COCO("../../dataset/pascal_train.json")
         if subset == "minival" or subset == "valminusminival":
             subset = "val"
-        image_dir = "{}/{}{}".format(dataset_dir, subset, year)
+        #image_dir = "{}/{}{}".format(dataset_dir, subset, year)
+        image_dir = "../../dataset/train_images"
 
         # Load all classes or a subset?
         if not class_ids:
@@ -405,14 +407,16 @@ if __name__ == '__main__':
     parser.add_argument("command",
                         metavar="<command>",
                         help="'train' or 'evaluate' on MS COCO")
-    parser.add_argument('--dataset', required=True,
+    parser.add_argument('--dataset', required=False,
+                        default=None,
                         metavar="/path/to/coco/",
                         help='Directory of the MS-COCO dataset')
     parser.add_argument('--year', required=False,
                         default=DEFAULT_DATASET_YEAR,
                         metavar="<year>",
                         help='Year of the MS-COCO dataset (2014 or 2017) (default=2014)')
-    parser.add_argument('--model', required=True,
+    parser.add_argument('--model', required=False,
+                        default="imagenet",
                         metavar="/path/to/weights.h5",
                         help="Path to weights .h5 file or 'coco'")
     parser.add_argument('--logs', required=False,
@@ -420,7 +424,7 @@ if __name__ == '__main__':
                         metavar="/path/to/logs/",
                         help='Logs and checkpoints directory (default=logs/)')
     parser.add_argument('--limit', required=False,
-                        default=500,
+                        default=0,
                         metavar="<image count>",
                         help='Images to use for evaluation (default=500)')
     parser.add_argument('--download', required=False,
@@ -472,6 +476,9 @@ if __name__ == '__main__':
     # Load weights
     print("Loading weights ", model_path)
     model.load_weights(model_path, by_name=True)
+    #model.summary()
+    #model.layers.pop()
+
 
     # Train or evaluate
     if args.command == "train":
@@ -528,7 +535,7 @@ if __name__ == '__main__':
         coco = dataset_val.load_coco(args.dataset, val_type, year=args.year, return_coco=True, auto_download=args.download)
         dataset_val.prepare()
         print("Running COCO evaluation on {} images.".format(args.limit))
-        evaluate_coco(model, dataset_val, coco, "bbox", limit=int(args.limit))
+        evaluate_coco(model, dataset_val, coco, "segm", limit=int(args.limit))
     else:
         print("'{}' is not recognized. "
               "Use 'train' or 'evaluate'".format(args.command))
