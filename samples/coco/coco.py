@@ -398,7 +398,7 @@ def evaluate_coco(model, dataset, coco, eval_type="bbox", limit=0, image_ids=Non
 
                 image_results = {}
                 image_results['image_id'] = image_id  # this imgid must be same as the key of test.json
-                image_results['category_id'] = int(dataset.get_source_class_id(r["class_ids"][i], "coco")),
+                image_results['category_id'] = int(dataset.get_source_class_id(r["class_ids"][i], "coco"))[0],
                 #image_results['segmentation'] =  maskUtils.encode(np.asfortranarray(mask))  # save binary mask to RLE, e.g. 512x512 -> rle
                 image_results['segmentation'] = binary_mask_to_rle(mask)
                 image_results['score'] = float(r["scores"][i])
