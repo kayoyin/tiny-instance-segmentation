@@ -89,7 +89,7 @@ class CocoConfig(Config):
     # GPU_COUNT = 8
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 20  # COCO has 80 classes
+    NUM_CLASSES = 1 + 80  # COCO has 80 classes
 
 
 ############################################################
@@ -144,7 +144,8 @@ class CocoDataset(utils.Dataset):
         # Add classes
         for i in class_ids:
             self.add_class("coco", i, coco.loadCats(i)[0]["name"])
-
+        for i in range(21, 81):
+            self.add_class("coco", i, "extra")
         # Add images
         for i in image_ids:
             self.add_image(
@@ -398,7 +399,7 @@ def evaluate_coco(model, dataset, coco, eval_type="bbox", limit=0, image_ids=Non
 
                 image_results = {}
                 image_results['image_id'] = image_id  # this imgid must be same as the key of test.json
-                image_results['category_id'] = int(dataset.get_source_class_id(r["class_ids"][i], "coco"))[0],
+                image_results['category_id'] = dataset.get_source_class_id(r["class_ids"][i], "coco"),
                 #image_results['segmentation'] =  maskUtils.encode(np.asfortranarray(mask))  # save binary mask to RLE, e.g. 512x512 -> rle
                 image_results['segmentation'] = binary_mask_to_rle(mask)
                 image_results['score'] = float(r["scores"][i])
@@ -537,14 +538,44 @@ if __name__ == '__main__':
         # Image Augmentation
         # Right/Left flip 50% of the time
         augmentation = imgaug.augmenters.Fliplr(0.5)
-
+        import imgaug.augmenters as iaa
+        seq = iaa.Sequential([
+            iaa.Fliplr(0.5), # horizontal flips
+            iaa.Crop(percent=(0, 0.1)), # random crops
+            # Small gaussian blur with random sigma between 0 and 0.5.
+            # But we only blur about 50% of all images.
+            iaa.Sometimes(0.5,
+                iaa.GaussianBlur(sigma=(0, 0.5))
+            ),
+            # Strengthen or weaken the contrast in each image.
+            iaa.ContrastNormalization((0.75, 1.5)),
+            # Add gaussian noise.
+            # For 50% of all images, we sample the noise once per pixel.
+            # For the other 50% of all images, we sample the noise per pixel AND
+            # channel. This can change the color (not only brightness) of the
+            # pixels.
+            iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05*255), per_channel=0.5),
+            # Make some images brighter and some darker.
+            # In 20% of all cases, we sample the multiplier once per channel,
+            # which can end up changing the color of the images.
+            iaa.Multiply((0.8, 1.2), per_channel=0.2),
+            # Apply affine transformations to each image.
+            # Scale/zoom them, translate/move them, rotate them and shear them.
+            iaa.Affine(
+                scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
+                translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
+                rotate=(-25, 25),
+                shear=(-8, 8)
+            )
+        ], random_order=True) # apply augmenters in random order
+        augmentation=seq
         # *** This training schedule is an example. Update to your needs ***
 
         # Training - Stage 1
         print("Training network heads")
         model.train(dataset_train, dataset_val,
                     learning_rate=config.LEARNING_RATE,
-                    epochs=40,
+                    epochs=20,
                     layers='heads',
                     augmentation=augmentation)
 
@@ -553,7 +584,7 @@ if __name__ == '__main__':
         print("Fine tune Resnet stage 4 and up")
         model.train(dataset_train, dataset_val,
                     learning_rate=config.LEARNING_RATE,
-                    epochs=120,
+                    epochs=100,
                     layers='4+',
                     augmentation=augmentation)
 
