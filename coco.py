@@ -228,7 +228,7 @@ def evaluate_coco(model, dataset, coco, limit=0):
     for image_id in image_ids:
         # Load image
         print("test_images/" + coco.loadImgs(ids=image_id)[0]['file_name'])
-        image = cv2.imread("../../dataset/test_images/" + coco.loadImgs(ids=image_id)[0]['file_name'])[:, :, ::-1]  # load image
+        image = cv2.imread("dataset/test_images/" + coco.loadImgs(ids=image_id)[0]['file_name'])[:, :, ::-1]  # load image
         # Run detection
         r = model.detect([image], verbose=0)[0]
         if r["rois"] is not None:
