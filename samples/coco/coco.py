@@ -6,25 +6,6 @@ Copyright (c) 2017 Matterport, Inc.
 Licensed under the MIT License (see LICENSE for details)
 Written by Waleed Abdulla
 
-------------------------------------------------------------
-
-Usage: import the module (see Jupyter notebooks for examples), or run from
-       the command line as such:
-
-    # Train a new model starting from pre-trained COCO weights
-    python3 coco.py train --dataset=/path/to/coco/ --model=coco
-
-    # Train a new model starting from ImageNet weights. Also auto download COCO dataset
-    python3 coco.py train --dataset=/path/to/coco/ --model=imagenet --download=True
-
-    # Continue training a model that you had trained earlier
-    python3 coco.py train --dataset=/path/to/coco/ --model=/path/to/weights.h5
-
-    # Continue training the last model you trained
-    python3 coco.py train --dataset=/path/to/coco/ --model=last
-
-    # Run COCO evaluatoin on the last model you trained
-    python3 coco.py evaluate --dataset=/path/to/coco/ --model=last
 """
 
 import os
@@ -347,7 +328,7 @@ if __name__ == '__main__':
         # Image Augmentation
         # Right/Left flip 50% of the time
 
-        seq = iaa.Sequential([
+        augmentation = iaa.Sequential([
             iaa.Fliplr(0.5), # horizontal flips
             iaa.Crop(percent=(0, 0.1)), # random crops
             # Small gaussian blur with random sigma between 0 and 0.5.
@@ -357,27 +338,18 @@ if __name__ == '__main__':
             ),
             # Strengthen or weaken the contrast in each image.
             iaa.ContrastNormalization((0.75, 1.5)),
-            # Add gaussian noise.
-            # For 50% of all images, we sample the noise once per pixel.
-            # For the other 50% of all images, we sample the noise per pixel AND
-            # channel. This can change the color (not only brightness) of the
-            # pixels.
-            iaa.AdditiveGaussianNoise(loc=0, scale=(0.0, 0.05*255), per_channel=0.5),
             # Make some images brighter and some darker.
             # In 20% of all cases, we sample the multiplier once per channel,
             # which can end up changing the color of the images.
-            iaa.Multiply((0.8, 1.2), per_channel=0.2),
+            iaa.Multiply((0.8, 1.2), per_channel=0),
             # Apply affine transformations to each image.
             # Scale/zoom them, translate/move them, rotate them and shear them.
             iaa.Affine(
                 scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
                 translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
-                rotate=(-25, 25),
-                shear=(-8, 8)
-            )
+                rotate=(-10, 10),
+                shear=(-2, 2)
         ], random_order=True) # apply augmenters in random order
-        augmentation=seq
-        # *** This training schedule is an example. Update to your needs ***
 
         # Training - Stage 1
         print("Training network heads")
@@ -394,15 +366,6 @@ if __name__ == '__main__':
                     learning_rate=config.LEARNING_RATE,
                     epochs=100,
                     layers='4+',
-                    augmentation=augmentation)
-
-        # Training - Stage 3
-        # Fine tune all layers
-        print("Fine tune all layers")
-        model.train(dataset_train, dataset_val,
-                    learning_rate=config.LEARNING_RATE / 10,
-                    epochs=160,
-                    layers='all',
                     augmentation=augmentation)
 
     elif args.command == "evaluate":
