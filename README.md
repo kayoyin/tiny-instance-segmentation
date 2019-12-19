@@ -35,14 +35,14 @@ Model weights and tensorboard logs will be saved in `logs/`
 
 ```
 # Train a new model starting from ImageNet weights
-python samples/coco/coco.py train --model=imagenet
+python coco.py train --model=imagenet
 
 # Continue training a model that you had trained earlier
-python samples/coco/coco.py train --model=/path/to/weights.h5
+python coco.py train --model=/path/to/weights.h5
 
 # Continue training the last model you trained. This will find
 # the last trained weights in the model directory.
-python samples/coco/coco.py train --model=last
+python coco.py train --model=last
 ```
 
 
@@ -59,7 +59,7 @@ In this case, change `IMAGE_MAX_DIM=1024` in `mrcnn/configs.py`, which will allo
 Inference and formatting the submission file is done as follows.
 
 ```
-python samples/coco/coco.py evaluate --model=last
+python coco.py evaluate --model=last
 python format.py
 ```
 
