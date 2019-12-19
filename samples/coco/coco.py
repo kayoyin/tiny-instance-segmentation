@@ -45,6 +45,7 @@ from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from pycocotools import mask as maskUtils
 from itertools import groupby
+import imgaug.augmenters as iaa
 
 
 import zipfile
@@ -126,8 +127,7 @@ class CocoDataset(utils.Dataset):
         # Add classes
         for i in class_ids:
             self.add_class("coco", i, coco.loadCats(i)[0]["name"])
-        for i in range(21, 81):
-            self.add_class("coco", i, "extra")
+
         # Add images
         for i in image_ids:
             self.add_image(
@@ -246,7 +246,6 @@ def evaluate_coco(model, dataset, coco, limit=0):
     results = []
     for image_id in image_ids:
         # Load image
-        #image = dataset.load_image(image_id)
         print("test_images/" + coco.loadImgs(ids=image_id)[0]['file_name'])
         image = cv2.imread("../../dataset/test_images/" + coco.loadImgs(ids=image_id)[0]['file_name'])[:, :, ::-1]  # load image
         # Run detection
@@ -258,7 +257,6 @@ def evaluate_coco(model, dataset, coco, limit=0):
                 image_results = {}
                 image_results['image_id'] = image_id  # this imgid must be same as the key of test.json
                 image_results['category_id'] = dataset.get_source_class_id(r["class_ids"][i], "coco"),
-                #image_results['segmentation'] =  maskUtils.encode(np.asfortranarray(mask))  # save binary mask to RLE, e.g. 512x512 -> rle
                 image_results['segmentation'] = binary_mask_to_rle(mask)
                 image_results['score'] = float(r["scores"][i])
                 results.append(image_results)
@@ -284,7 +282,7 @@ if __name__ == '__main__':
     parser.add_argument('--model', required=False,
                         default="imagenet",
                         metavar="/path/to/weights.h5",
-                        help="Path to weights .h5 file or 'coco'")
+                        help="Path to weights .h5 file or imagenet or last")
     parser.add_argument('--logs', required=False,
                         default=DEFAULT_LOGS_DIR,
                         metavar="/path/to/logs/",
@@ -346,12 +344,9 @@ if __name__ == '__main__':
         dataset_val.load_coco(args.command, val=True)
         dataset_val.prepare()
 
-        print(len(dataset_train._image_ids), len(dataset_val._image_ids))
-
         # Image Augmentation
         # Right/Left flip 50% of the time
-        augmentation = imgaug.augmenters.Fliplr(0.5)
-        import imgaug.augmenters as iaa
+
         seq = iaa.Sequential([
             iaa.Fliplr(0.5), # horizontal flips
             iaa.Crop(percent=(0, 0.1)), # random crops
@@ -415,7 +410,7 @@ if __name__ == '__main__':
         dataset_test = CocoDataset()
         coco = dataset_test.load_coco(args.command, return_coco=True)
         dataset_test.prepare()
-        evaluate_coco(model, dataset_test, coco, "segm", limit=int(args.limit))
+        evaluate_coco(model, dataset_test, coco, limit=int(args.limit))
     else:
         print("'{}' is not recognized. "
               "Use 'train' or 'evaluate'".format(args.command))
