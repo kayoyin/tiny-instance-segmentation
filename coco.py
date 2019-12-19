@@ -35,7 +35,7 @@ import shutil
 
 
 # Root directory of the project
-ROOT_DIR = os.path.abspath("../../")
+ROOT_DIR = os.path.abspath("./")
 
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
@@ -83,12 +83,12 @@ class CocoDataset(utils.Dataset):
         """
 
         if command == "train":
-            coco = COCO("../../dataset/pascal_train.json")
-            image_dir = "../../dataset/train_images"
+            coco = COCO("dataset/pascal_train.json")
+            image_dir = "dataset/train_images"
 
         else:
-            coco = COCO("../../dataset/test.json")
-            image_dir = "../../dataset/test_images"
+            coco = COCO("dataset/test.json")
+            image_dir = "dataset/test_images"
 
         class_ids = sorted(coco.getCatIds())
 
@@ -242,7 +242,7 @@ def evaluate_coco(model, dataset, coco, limit=0):
                 image_results['score'] = float(r["scores"][i])
                 results.append(image_results)
 
-    with open("../../submission.json", "w") as f:
+    with open("submission.json", "w") as f:
         json.dump(results, f)
 
 
@@ -348,8 +348,8 @@ if __name__ == '__main__':
                 scale={"x": (0.8, 1.2), "y": (0.8, 1.2)},
                 translate_percent={"x": (-0.2, 0.2), "y": (-0.2, 0.2)},
                 rotate=(-10, 10),
-                shear=(-2, 2)
-        ], random_order=True) # apply augmenters in random order
+                shear=(-2, 2))
+            ], random_order=True) # apply augmenters in random order
 
         # Training - Stage 1
         print("Training network heads")
