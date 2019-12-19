@@ -25,6 +25,7 @@ It is strongly recommended to set up a new environment for this project. An exam
 virtualenv venv --python=python3
 source venv/bin/activate
 pip install -r requirements.txt
+python setup.py install
 ``` 
 
 ## Training
@@ -34,24 +35,31 @@ Model weights and tensorboard logs will be saved in `logs/`
 
 ```
 # Train a new model starting from ImageNet weights
-python samples/coco/coco.py train --model=imagenet
+python coco.py train --model=imagenet
 
 # Continue training a model that you had trained earlier
-python samples/coco/coco.py train --model=/path/to/weights.h5
+python coco.py train --model=/path/to/weights.h5
 
 # Continue training the last model you trained. This will find
 # the last trained weights in the model directory.
-python samples/coco/coco.py train --model=last
+python coco.py train --model=last
 ```
 
 
 The training schedule, learning rate, and other parameters should be set in `samples/coco/coco.py`.
 
+Sometimes, the following error appears:
+```
+Exception: Image size must be dividable by 2 at least 6 times to avoid fractions when downscaling and upscaling.For example, use 256, 320, 384, 448, 512, ... etc. 
+```
+
+In this case, change `IMAGE_MAX_DIM=1024` in `mrcnn/configs.py`, which will allow the model to run with similar performance and slower training.
+
 ## Inference
 Inference and formatting the submission file is done as follows.
 
 ```
-python samples/coco/coco.py evaluate --model=last
+python coco.py evaluate --model=last
 python format.py
 ```
 
