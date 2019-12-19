@@ -25,6 +25,7 @@ It is strongly recommended to set up a new environment for this project. An exam
 virtualenv venv --python=python3
 source venv/bin/activate
 pip install -r requirements.txt
+python setup.py install
 ``` 
 
 ## Training
@@ -46,6 +47,13 @@ python samples/coco/coco.py train --model=last
 
 
 The training schedule, learning rate, and other parameters should be set in `samples/coco/coco.py`.
+
+Sometimes, the following error appears:
+```
+Exception: Image size must be dividable by 2 at least 6 times to avoid fractions when downscaling and upscaling.For example, use 256, 320, 384, 448, 512, ... etc. 
+```
+
+In this case, change `IMAGE_MAX_DIM=1024` in `mrcnn/configs.py`, which will allow the model to run with similar performance and slower training.
 
 ## Inference
 Inference and formatting the submission file is done as follows.
